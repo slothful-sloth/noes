@@ -241,9 +241,27 @@ function G.draw7(player)
 end
 
 -- A face-down tile dropped into a seat's area during the sopa is drawn by that seat.
+-- During the draw, only seated players who still need tiles may take loose tiles.
+function G.mayTakeTile(color)
+  if S.settings.dev then return true end
+  local seat = U.seatOf(color)
+  return seat ~= nil and #S.hand.hands[seat] < R.HAND_SIZE
+end
+
+function G.sopaPickUp(color, key, obj)
+  if S.phase ~= "sopa" or S.hand.sopaStage ~= "draw" or G.ownerOf(key) then return end
+  if not G.mayTakeTile(color) then
+    U.tell(color, U.seatOf(color) and "You already have 7 tiles." or "Take a seat to draw tiles.", { 1, 0.6, 0.4 })
+  end
+end
+
 function G.sopaDrop(color, key, obj)
   if S.hand.sopaStage ~= "draw" then return end   -- while stirring, tiles are just moved around
   local owner = G.ownerOf(key)
+  if not owner and not G.mayTakeTile(color) then
+    Tiles.scatter({ key })                        -- back into the sopa
+    return
+  end
   local p = obj.getPosition()
   local seat = U.seatArea(p)
   if owner then

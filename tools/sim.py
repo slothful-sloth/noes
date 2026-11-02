@@ -205,6 +205,15 @@ def run_series(seed: int, ruleset: str, bestof: int, verbose: bool) -> dict:
                     g.onObjectDrop(color_of[seat], obj)
                 adv(0.1)
                 g.uiHandAct(players[color_of[seat]], None, f"h{seat}_shuffle")
+                if seat == 2 and len(lua_to_py(g.S.hand.hands[1]) or []) == 7:
+                    # seat 1 is full: grabbing another loose tile must not give it a tile
+                    free = [k for k in (lua_to_py(g.require("tiles").allKeys()) or []) if not g.require("game").ownerOf(k)]
+                    if free:
+                        o3 = g.getObjectFromGUID(build.tile_guid(int(free[0][0]), int(free[0][2])))
+                        g.onObjectPickUp("Red", o3)
+                        o3.setPosition(U.seatPoint(1, 16.8, 0, 1.3))
+                        g.onObjectDrop("Red", o3)
+                        assert len(lua_to_py(g.S.hand.hands[1]) or []) == 7
                 if random.random() < 0.5:
                     g.uiHandAct(players[color_of[seat]], None, f"h{seat}_draw")
                 else:

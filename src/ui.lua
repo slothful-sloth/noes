@@ -133,10 +133,12 @@ function UIx.refreshLobby()
   styleButton("rsPr", st.ruleset == "pr")
   styleButton("rsCustom", st.ruleset == "custom")
   for _, n in ipairs({ 1, 3, 5 }) do styleButton("bo" .. n, st.bestOf == n) end
-  for _, id in ipairs({ "faceBtn", "backBtn", "tableBtn" }) do styleButton(id, false) end
+
   setLabel("faceBtn", "Face: " .. nameOf(C.FACES, st.face))
   setLabel("backBtn", "Back: " .. nameOf(C.BACKS, st.back))
   setLabel("tableBtn", "Table: " .. nameOf(C.TABLE_FACES, st.tableFace))
+  -- setting a label resets the text colour, so style afterwards
+  for _, id in ipairs({ "faceBtn", "backBtn", "tableBtn" }) do styleButton(id, false) end
   setAttr("backUrl", "text", st.backUrl or "")
   setAttr("tableUrl", "text", st.tableUrl or "")
   setLabel("devMode", "Developer mode: " .. (st.dev and "ON" or "off"))
@@ -237,6 +239,12 @@ local ACTIONS = { "shuffle", "draw", "lead", "left", "right", "pass", "spin", "c
 UIx.displayed = { {}, {}, {}, {} }   -- seat -> keys in button order
 UIx.devView = 0                      -- developer mode: 0 = follow the turn, else a seat
 
+-- Developer mode during the sopa: show the hand of the seat the (single) tester sits in.
+function UIx.devHomeSeat()
+  for seat = 1, 4 do if U.playerAt(seat) then return seat end end
+  return 1
+end
+
 function UIx.refreshHands()
   local inHand = (S.phase == "sopa" or S.phase == "play")
   for seat = 1, 4 do
@@ -244,7 +252,7 @@ function UIx.refreshHands()
     local color = C.SEATS[seat].color
     local show = inHand and UIx.handView ~= nil
     if S.settings.dev then
-      local want = (UIx.devView ~= 0) and UIx.devView or (S.phase == "play" and S.hand.turn) or 1
+      local want = (UIx.devView ~= 0) and UIx.devView or (S.phase == "play" and S.hand.turn) or UIx.devHomeSeat()
       show = show and want == seat
     end
     if not show then

@@ -71,6 +71,11 @@ end
 
 -- Objects -------------------------------------------------------------------------------------
 
+function onObjectPickUp(color, obj)
+  local key = Tiles.keyOf(obj)
+  if key then G.sopaPickUp(color, key, obj) end
+end
+
 function onObjectDrop(color, obj)
   local key = Tiles.keyOf(obj)
   if key then
