@@ -1,0 +1,9 @@
+# Noes proxy collider (deliberately far away)
+v 0 -40 0
+v 0.05 -40 0
+v 0 -40 0.05
+v 0 -39.95 0
+f 1 3 2
+f 1 2 4
+f 1 4 3
+f 2 3 4

@@ -1,0 +1,167 @@
+<!-- Noes global UI. Callbacks live in src/main.lua.
+     Inside layout groups, children are sized with preferredWidth/preferredHeight (not width/height).
+     Button colours that change at runtime are set by src/ui.lua (styleButton), not by classes. -->
+<Defaults>
+  <Panel class="card" color="#15191eeb" outline="#c9a46a" outlineSize="2 2" />
+  <Text color="#f1ece2" fontSize="18" />
+  <Text class="title" fontSize="30" fontStyle="Bold" color="#f3d08a" />
+  <Text class="h" fontSize="19" fontStyle="Bold" color="#f3d08a" alignment="MiddleLeft" />
+  <Text class="small" fontSize="15" color="#cfc8ba" />
+  <Button fontSize="17" textColor="#1b1b1b" colors="#e9dcc2|#fff3d6|#c9b48c|#77706280" />
+  <InputField fontSize="17" textColor="#1b1b1b" colors="#f6f1e6|#ffffff|#ffffff|#c0bab080" characterLimit="40" />
+</Defaults>
+
+<!-- Top bar (below TTS's own toolbar) -->
+<HorizontalLayout id="topbar" rectAlignment="UpperCenter" offsetXY="0 -78" width="820" height="36" spacing="6"
+                  childForceExpandWidth="false" childForceExpandHeight="true">
+  <Button id="btnLobby" preferredWidth="110" onClick="uiToggleLobby">Lobby</Button>
+  <Button id="btnScore" preferredWidth="110" onClick="uiToggleScore">Score</Button>
+  <Button id="btnRules" preferredWidth="110" onClick="uiToggleRules">Rules</Button>
+  <Panel preferredWidth="480" color="#15191ee0">
+    <Text id="status" fontSize="16" alignment="MiddleCenter">Lobby: choose your seats</Text>
+  </Panel>
+</HorizontalLayout>
+
+<!-- Big announcement banner -->
+<Panel id="banner" active="false" rectAlignment="MiddleCenter" offsetXY="0 200" width="1000" height="120" color="#00000000" raycastTarget="false">
+  <Text id="bannerText" fontSize="72" fontStyle="Bold" color="#ffd36b" outline="#000000" outlineSize="3 -3" raycastTarget="false">¡Capicú!</Text>
+</Panel>
+
+<!-- Lobby -->
+<Panel id="lobby" class="card" rectAlignment="MiddleCenter" width="1000" height="640" active="true"
+       allowDragging="true" returnToOriginalPositionWhenReleased="false">
+  <Text class="title" rectAlignment="UpperCenter" offsetXY="0 -14" height="40">Noes · Partner Dominoes</Text>
+  <Text class="small" rectAlignment="UpperCenter" offsetXY="0 -52" height="24">Pick a seat (partners sit opposite). Drag this window to move it.</Text>
+  <Button rectAlignment="UpperRight" offsetXY="-12 -12" width="90" height="32" onClick="uiToggleLobby">Hide</Button>
+
+  <!-- Seats: a map of the table seen from above (South at the bottom) -->
+  <Text class="h" rectAlignment="UpperLeft" offsetXY="24 -84" width="300" height="26">Seats</Text>
+  <Panel rectAlignment="UpperLeft" offsetXY="24 -112" width="300" height="250" color="#00000000">
+    <Panel rectAlignment="MiddleCenter" width="110" height="96" color="#1f5e3a" outline="#b98a4e" outlineSize="3 3">
+      <Text fontSize="14" color="#e9dcc2">table</Text>
+    </Panel>
+    <Button id="seat3" rectAlignment="UpperCenter" offsetXY="0 0" width="150" height="66" fontSize="14" onClick="uiSeat3">North · Orange</Button>
+    <Button id="seat1" rectAlignment="LowerCenter" offsetXY="0 0" width="150" height="66" fontSize="14" onClick="uiSeat1">South · Red</Button>
+    <Button id="seat4" rectAlignment="MiddleLeft" offsetXY="0 0" width="92" height="96" fontSize="13" onClick="uiSeat4">West · Teal</Button>
+    <Button id="seat2" rectAlignment="MiddleRight" offsetXY="0 0" width="92" height="96" fontSize="13" onClick="uiSeat2">East · Blue</Button>
+  </Panel>
+  <Text id="youAt1" visibility="Red" rectAlignment="UpperLeft" offsetXY="24 -362" width="300" height="34" fontSize="13" alignment="UpperCenter" color="#f3d08a"> </Text>
+  <Text id="youAt2" visibility="Blue" rectAlignment="UpperLeft" offsetXY="24 -362" width="300" height="34" fontSize="13" alignment="UpperCenter" color="#f3d08a"> </Text>
+  <Text id="youAt3" visibility="Orange" rectAlignment="UpperLeft" offsetXY="24 -362" width="300" height="34" fontSize="13" alignment="UpperCenter" color="#f3d08a"> </Text>
+  <Text id="youAt4" visibility="Teal" rectAlignment="UpperLeft" offsetXY="24 -362" width="300" height="34" fontSize="13" alignment="UpperCenter" color="#f3d08a"> </Text>
+  <Text id="youAtNone" visibility="White|Brown|Yellow|Green|Purple|Pink|Grey|Black" rectAlignment="UpperLeft" offsetXY="24 -362" width="300" height="34" fontSize="13" alignment="UpperCenter" color="#cfc8ba">You're not seated. Pick a seat above.</Text>
+
+  <!-- Team names -->
+  <VerticalLayout rectAlignment="UpperLeft" offsetXY="24 -396" width="300" height="130" spacing="4"
+                  childForceExpandHeight="false" childForceExpandWidth="true">
+    <Text class="h" preferredHeight="24" color="#E8743B">Team 1 · North–South</Text>
+    <InputField id="team1" preferredHeight="32" onEndEdit="uiTeamName">Team Red</InputField>
+    <Text class="h" preferredHeight="24" color="#3BA3E8">Team 2 · East–West</Text>
+    <InputField id="team2" preferredHeight="32" onEndEdit="uiTeamName">Team Blue</InputField>
+  </VerticalLayout>
+
+  <!-- Settings -->
+  <VerticalLayout rectAlignment="UpperLeft" offsetXY="336 -90" width="320" height="440" spacing="6"
+                  childForceExpandHeight="false" childForceExpandWidth="true">
+    <Text class="h" preferredHeight="26">Rule set</Text>
+    <HorizontalLayout preferredHeight="36" spacing="6">
+      <Button id="rsPr" onClick="uiRulesPr">Puerto Rican</Button>
+      <Button id="rsCustom" onClick="uiRulesCustom">Four Horsies</Button>
+    </HorizontalLayout>
+    <Text class="h" preferredHeight="26">Series</Text>
+    <HorizontalLayout preferredHeight="36" spacing="6">
+      <Button id="bo1" onClick="uiBestOf1">Best of 1</Button>
+      <Button id="bo3" onClick="uiBestOf3">Best of 3</Button>
+      <Button id="bo5" onClick="uiBestOf5">Best of 5</Button>
+    </HorizontalLayout>
+    <Text class="h" preferredHeight="26">Tiles</Text>
+    <Button id="faceBtn" preferredHeight="34" onClick="uiCycleFace">Face: White with black pips</Button>
+    <Button id="backBtn" preferredHeight="34" onClick="uiCycleBack">Back: Puerto Rico</Button>
+    <InputField id="backUrl" preferredHeight="32" placeholder="Custom back image URL" onEndEdit="uiBackUrl"></InputField>
+    <Text class="h" preferredHeight="26">Table</Text>
+    <Button id="tableBtn" preferredHeight="34" onClick="uiCycleTable">Table: Green felt</Button>
+    <InputField id="tableUrl" preferredHeight="32" placeholder="Custom table image URL" onEndEdit="uiTableUrl"></InputField>
+  </VerticalLayout>
+
+  <!-- Rules text -->
+  <Panel rectAlignment="UpperLeft" offsetXY="678 -90" width="300" height="400" color="#0d1013cc">
+    <Text id="lobbyRules" class="small" alignment="UpperLeft" rectAlignment="UpperLeft" offsetXY="10 -8" width="282" height="384" fontSize="15">rules</Text>
+  </Panel>
+  <Button id="devMode" rectAlignment="UpperLeft" offsetXY="678 -498" width="300" height="28" fontSize="13" onClick="uiDevMode">Developer mode: off</Button>
+
+  <Button id="btnStart" rectAlignment="LowerCenter" offsetXY="0 40" width="300" height="50" fontSize="26" fontStyle="Bold" onClick="uiStart">¡A jugar!</Button>
+  <Text id="lobbyStatus" rectAlignment="LowerCenter" offsetXY="0 10" width="960" height="26" fontSize="17" color="#f3d08a">Waiting for four players</Text>
+</Panel>
+
+<!-- Rules reference (toggle per player) -->
+<Panel id="rulesPanel" class="card" active="false" rectAlignment="MiddleRight" offsetXY="-10 0" width="420" height="520"
+       allowDragging="true" returnToOriginalPositionWhenReleased="false">
+  <Text class="h" rectAlignment="UpperCenter" alignment="MiddleCenter" offsetXY="0 -10" height="30">Rules</Text>
+  <Text id="rulesText" class="small" fontSize="16" alignment="UpperLeft" rectAlignment="UpperLeft" offsetXY="14 -46" width="392" height="460">rules</Text>
+</Panel>
+
+<!-- Scoreboard (toggle per player) -->
+<Panel id="scorePanel" class="card" active="false" rectAlignment="MiddleLeft" offsetXY="70 20" width="580" height="610"
+       allowDragging="true" returnToOriginalPositionWhenReleased="false">
+  <Text id="scoreTitle" class="h" rectAlignment="UpperCenter" alignment="MiddleCenter" offsetXY="0 -10" width="560" height="30">Score</Text>
+  <Text id="scoreSeries" rectAlignment="UpperCenter" offsetXY="0 -42" width="560" height="26" fontSize="16">Series</Text>
+  <Text id="scoreCol1" class="small" rectAlignment="UpperLeft" offsetXY="14 -76" width="30" height="420" fontSize="15" alignment="UpperLeft"> </Text>
+  <Text id="scoreCol2" class="small" rectAlignment="UpperLeft" offsetXY="44 -76" width="140" height="420" fontSize="15" alignment="UpperLeft"> </Text>
+  <Text id="scoreCol3" class="small" rectAlignment="UpperLeft" offsetXY="184 -76" width="210" height="420" fontSize="15" alignment="UpperLeft"> </Text>
+  <Text id="scoreCol4" class="small" rectAlignment="UpperLeft" offsetXY="394 -76" width="84" height="420" fontSize="15" alignment="UpperRight"> </Text>
+  <Text id="scoreCol5" class="small" rectAlignment="UpperLeft" offsetXY="482 -76" width="84" height="420" fontSize="15" alignment="UpperRight"> </Text>
+  <Text id="scoreTotals" rectAlignment="LowerLeft" offsetXY="14 60" width="552" height="40" fontSize="19" fontStyle="Bold" alignment="MiddleLeft">Totals</Text>
+  <HorizontalLayout rectAlignment="LowerCenter" offsetXY="0 12" width="420" height="38" spacing="16">
+    <Button id="btnResetRound" fontSize="16" onClick="uiResetRound">Reset round</Button>
+    <Button id="btnResetMatch" fontSize="16" onClick="uiResetMatch">Reset match</Button>
+  </HorizontalLayout>
+</Panel>
+
+<!-- Confirmation prompt (shown only to the player who asked) -->
+<Panel id="confirmPanel" class="card" active="false" rectAlignment="MiddleCenter" width="520" height="170">
+  <Text id="confirmText" rectAlignment="UpperCenter" offsetXY="0 -14" width="490" height="90" fontSize="17">Are you sure?</Text>
+  <HorizontalLayout rectAlignment="LowerCenter" offsetXY="0 14" width="380" height="44" spacing="16">
+    <Button id="confirmYes" onClick="uiConfirmYes">Yes, reset</Button>
+    <Button onClick="uiConfirmNo">Cancel</Button>
+  </HorizontalLayout>
+</Panel>
+
+<!-- Sopa (shuffle & draw) controls -->
+<Panel id="sopaPanel" class="card" active="false" rectAlignment="LowerCenter" offsetXY="0 150" width="540" height="104">
+  <Text id="sopaText" rectAlignment="UpperCenter" offsetXY="0 -8" width="520" height="30" fontSize="16">La sopa: stir the tiles, then draw 7</Text>
+  <HorizontalLayout rectAlignment="LowerCenter" offsetXY="0 12" width="480" height="44" spacing="12">
+    <Button id="btnShuffle" onClick="uiShuffle">Shuffle</Button>
+    <Button id="btnDraw" onClick="uiDraw7">Draw 7</Button>
+  </HorizontalLayout>
+</Panel>
+
+<!-- Redeal prompt (shown only to a player holding 5+ doubles) -->
+<Panel id="redealPanel" class="card" active="false" rectAlignment="MiddleCenter" offsetXY="0 -120" width="480" height="130">
+  <Text rectAlignment="UpperCenter" offsetXY="0 -12" width="460" height="50" fontSize="17">You were dealt 5 or more doubles. Ask for a redeal?</Text>
+  <HorizontalLayout rectAlignment="LowerCenter" offsetXY="0 14" width="380" height="44" spacing="16">
+    <Button onClick="uiRedealYes">Redeal</Button>
+    <Button onClick="uiRedealNo">Keep my tiles</Button>
+  </HorizontalLayout>
+</Panel>
+
+<!-- Developer mode: choose whose hand panel is shown -->
+<HorizontalLayout id="devBar" active="false" rectAlignment="LowerCenter" offsetXY="0 218" width="520" height="30" spacing="4">
+  <Button id="dv0" fontSize="14" onClick="uiDevView">Turn</Button>
+  <Button id="dv1" fontSize="14" onClick="uiDevView">Red</Button>
+  <Button id="dv2" fontSize="14" onClick="uiDevView">Blue</Button>
+  <Button id="dv3" fontSize="14" onClick="uiDevView">Orange</Button>
+  <Button id="dv4" fontSize="14" onClick="uiDevView">Teal</Button>
+</HorizontalLayout>
+
+<!-- Private hand panels (generated by tools/build.py) -->
+<!--HAND_PANELS-->
+
+<!-- Hand / game / series result -->
+<Panel id="resultPanel" class="card" active="false" rectAlignment="UpperCenter" offsetXY="0 -130" width="640" height="230"
+       allowDragging="true" returnToOriginalPositionWhenReleased="false">
+  <Text id="resultTitle" class="title" rectAlignment="UpperCenter" offsetXY="0 -12" width="620" height="40">Result</Text>
+  <Text id="resultText" rectAlignment="UpperCenter" offsetXY="0 -56" width="600" height="110" fontSize="17">details</Text>
+  <Button id="resultBtn" rectAlignment="LowerCenter" offsetXY="0 14" width="220" height="44" onClick="uiResultNext">Next hand</Button>
+  <Button id="swap1" active="false" rectAlignment="LowerLeft" offsetXY="16 14" width="170" height="44" fontSize="14" onClick="uiSwap1">Swap seats: Team 1</Button>
+  <Button id="swap2" active="false" rectAlignment="LowerRight" offsetXY="-16 14" width="170" height="44" fontSize="14" onClick="uiSwap2">Swap seats: Team 2</Button>
+</Panel>
