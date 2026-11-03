@@ -12,7 +12,6 @@ import math
 import sys
 from pathlib import Path
 
-import cairosvg
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -59,6 +58,7 @@ def tint(noise: np.ndarray, c0, c1) -> np.ndarray:
 
 
 def svg_to_img(svg: str, w: int, h: int) -> Image.Image:
+    import cairosvg  # needs the system Cairo library; only the flag textures use it
     png = cairosvg.svg2png(bytestring=svg.encode(), output_width=w, output_height=h)
     return Image.open(io.BytesIO(png)).convert("RGBA")
 
@@ -117,7 +117,7 @@ def back_flag(fn, w, h) -> Image.Image:
 
 
 def back_nj(w, h) -> Image.Image:
-    svg = (DL / "nj_flag.svg").read_text()
+    svg = (DL / "nj_flag.svg").read_text(encoding="utf-8")
     zoom = 1.45
     art = svg_to_img(svg, int(h * zoom * 1000 / 600), int(h * zoom))
     field = art.getpixel((5, 5))[:3]
@@ -372,7 +372,7 @@ def main(argv: list[str]):
                     out = OUT / "ui" / face / f"tv_{hi}{lo}.png"
                     out.parent.mkdir(parents=True, exist_ok=True)
                     im.save(out, optimize=True)
-        print("  assets/textures/ui/<face>/t_*.png (84 images)")
+        print("  assets/textures/ui/<face>/tv_*.png (84 images)")
     if not only or "board" in only:
         board = chalkboard(1024, 1024)
         frame = wood(512, 512, (150, 100, 55), (98, 62, 30), seed=91, rings=10)

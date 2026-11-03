@@ -65,7 +65,7 @@ class Mesh:
             else:
                 lines.append(f"f {a + 1}//{a + 1} {b + 1}//{b + 1} {c + 1}//{c + 1}")
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("\n".join(lines) + "\n")
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
         print(f"  {path.relative_to(ROOT)}: {len(self.v)} verts, {len(self.f)} tris")
 
 

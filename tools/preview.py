@@ -14,7 +14,7 @@ from PIL import Image
 
 def load_obj(path):
     v, vt, vn, faces = [], [], [], []
-    for line in open(path):
+    for line in open(path, encoding="utf-8"):
         if line.startswith("v "):
             v.append([float(x) for x in line.split()[1:4]])
         elif line.startswith("vt "):
