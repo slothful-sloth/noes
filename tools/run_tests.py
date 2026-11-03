@@ -14,6 +14,10 @@ def main() -> int:
     g.R = lua.execute((ROOT / "src/rules.lua").read_text())
     g.Layout = lua.execute((ROOT / "src/layout.lua").read_text())
     failed = lua.execute((ROOT / "tests/test_logic.lua").read_text())
+    interactions = lua52.LuaRuntime(unpack_returned_tuples=True)
+    interactions.globals().SOURCE_ROOT = ROOT.as_posix()
+    interactions.execute('package.path = SOURCE_ROOT .. "/src/?.lua;" .. package.path')
+    failed = interactions.execute((ROOT / "tests/test_physical.lua").read_text()) or failed
     return 1 if failed else 0
 
 

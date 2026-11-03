@@ -24,7 +24,7 @@ REPO = "slothful-sloth/noes"
 SAVES = Path.home() / ".local/share/Tabletop Simulator/Saves"
 STATE_FILE = ROOT / ".build_assets"
 
-MODULE_ORDER = ["rules", "layout", "config", "util", "store", "tiles", "ui", "sound", "themes", "game"]
+MODULE_ORDER = ["rules", "layout", "config", "util", "store", "tiles", "physical", "ui", "sound", "themes", "game"]
 
 TABLE_Y = 1.0
 SEATS = [  # seat number -> colour, direction (x, z) from the centre toward the player
@@ -97,7 +97,7 @@ def hand_panels_xml() -> str:
             f'      <Button id="{h}_{a}" preferredHeight="34" fontSize="16" onClick="uiHandAct" active="false">{label}</Button>'
             for a, label in (("shuffle", "Shuffle"), ("draw", "Draw 7"), ("lead", "Lead this tile"), ("left", "Play left"), ("right", "Play right"),
                              ("pass", "¡Paso!"), ("spin", "Spin it (taunt)"), ("commit", "Commit ¡Va!"),
-                             ("back", "Take it back")))
+                             ("back", "Take it back"), ("physical", "Physical tiles: off")))
         out.append(f"""<Panel id="hand{seat}" class="card" active="false" visibility="{colour}" rectAlignment="LowerCenter"
        offsetXY="0 10" width="900" height="200">
   <Text id="{h}_info" rectAlignment="UpperLeft" offsetXY="16 -6" width="860" height="28" fontSize="17" alignment="MiddleLeft">Your hand</Text>

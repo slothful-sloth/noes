@@ -7,6 +7,7 @@ local Tiles = require("tiles")
 local UIx = require("ui")
 local Themes = require("themes")
 local G = require("game")
+local Physical = require("physical")
 
 local function addMenus()
   for _, key in ipairs(Tiles.allKeys()) do
@@ -72,15 +73,35 @@ end
 -- Objects -------------------------------------------------------------------------------------
 
 function onObjectPickUp(color, obj)
+  if Physical.info(obj) then return G.pickUpPhysical(color, obj) end
   local key = Tiles.keyOf(obj)
   if key then G.sopaPickUp(color, key, obj) end
 end
 
 function onObjectDrop(color, obj)
+  if Physical.info(obj) then
+    Wait.frames(function()
+      if not obj.isDestroyed() and not obj.held_by_color then G.dropPhysical(color, obj) end
+    end, 1)
+    return
+  end
   local key = Tiles.keyOf(obj)
   if key then
     Wait.frames(function() G.drop(color, key, obj) end, 1)
   end
+end
+
+function onPlayerAction(player, action, targets)
+  for _, obj in ipairs(targets) do
+    local info = Physical.info(obj)
+    if info then
+      if not G.canHandlePhysical(player.color, info) then return false end
+      -- Proxies represent existing tiles and must never enter the game as extra pieces.
+      if action == Player.Action.Copy or action == Player.Action.Cut
+        or action == Player.Action.Delete or action == Player.Action.Group then return false end
+    end
+  end
+  return true
 end
 
 function onObjectRotate(obj, spin, flip, color, oldSpin, oldFlip)

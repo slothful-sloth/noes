@@ -235,7 +235,7 @@ end
 
 -- Hand panels ------------------------------------------------------------------------------------
 
-local ACTIONS = { "shuffle", "draw", "lead", "left", "right", "pass", "spin", "commit", "back" }
+local ACTIONS = { "shuffle", "draw", "lead", "left", "right", "pass", "spin", "commit", "back", "physical" }
 UIx.displayed = { {}, {}, {}, {} }   -- seat -> keys in button order
 UIx.devView = 0                      -- developer mode: 0 = follow the turn, else a seat
 

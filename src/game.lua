@@ -8,8 +8,15 @@ local Tiles = require("tiles")
 local UIx = require("ui")
 local Sound = require("sound")
 local Themes = require("themes")
+local Physical = require("physical")
 
 local G = {}
+G.physicalSeats = {} -- opt in per seat for this session; desktop controls remain available
+
+function G.refreshPhysical()
+  Physical.clear()
+  if S.phase == "play" and G.physicalSeats[S.hand.turn] then Physical.show(S.hand.turn) end
+end
 
 local startToken = 0
 local spinToken = {}      -- seat -> token of the running spin animation
@@ -156,6 +163,7 @@ end
 -- Sopa and draw ---------------------------------------------------------------------------
 
 function G.startHand()
+  Physical.clear()
   for seat = 1, 4 do spinToken[seat] = (spinToken[seat] or 0) + 1 end
   Tiles.clearMarkers()
   S.hand = Store.newHand()
@@ -391,6 +399,7 @@ function G.startTurn()
   end
   UIx.refreshHands()
   UIx.refreshScore()
+  G.refreshPhysical()
 end
 
 -- Hand panel: selecting tiles and acting ------------------------------------------------------
@@ -454,6 +463,11 @@ end
 
 function G.handAction(color, seat, action)
   if (S.phase ~= "play" and S.phase ~= "sopa") or not G.canControl(color, seat) then return end
+  if action == "physical" and S.phase == "play" then
+    G.physicalSeats[seat] = not G.physicalSeats[seat]
+    if seat == S.hand.turn then G.refreshPhysical() end
+    return UIx.refreshHands()
+  end
   local h = S.hand
   if action == "lead" then return G.playSelected(color, seat, "C") end
   if action == "left" then return G.playSelected(color, seat, "L") end
@@ -514,6 +528,7 @@ function G.handView(seat)
     v.info = "Hand over"
     return v
   end
+  v.actions.physical = "Physical tiles: " .. (G.physicalSeats[seat] and "on" or "off")
   local sel = G.selected[seat]
   local ends = (h.board.count > 0) and string.format("  ·  Ends: %d and %d", h.board.L, h.board.R) or ""
   if seat == h.turn then
@@ -523,7 +538,7 @@ function G.handView(seat)
     elseif h.committed[seat] then
       v.info = "You committed to the " .. h.committed[seat]:gsub("-", "|") .. ". Play it." .. ends
     elseif not sel then
-      v.info = "Your turn: pick a tile." .. ends
+      v.info = (G.physicalSeats[seat] and "Your turn: grab a tile from your private 3D rack." or "Your turn: pick a tile.") .. ends
     end
     if sel and #R.legalSides(h.board, R.parse(sel), legalOpts()) == 0 then v.selectedBad = true end
     if sel and R.hasLegalMove(h.board, handTiles(seat), legalOpts()) then
@@ -532,7 +547,8 @@ function G.handView(seat)
         v.selectedBad = true
         v.info = "The " .. sel:gsub("-", "|") .. " doesn't fit." .. ends
       else
-        v.info = v.info or ("Play the " .. sel:gsub("-", "|") .. ": click a green spot or a button." .. ends)
+        local help = G.physicalSeats[seat] and ": release near a green spot, or use a button." or ": click a green spot or a button."
+        v.info = v.info or ("Play the " .. sel:gsub("-", "|") .. help .. ends)
         for _, sd in ipairs(sides) do
           if sd == "C" then v.actions.lead = "Lead the " .. sel:gsub("-", "|") end
           if sd == "L" then v.actions.left = "Play on the " .. h.board.L .. " (left)" end
@@ -582,6 +598,7 @@ function G.resetRound(player)
 end
 
 function G.resetMatch(player)
+  Physical.clear()
   if S.phase == "lobby" then return end
   for seat = 1, 4 do spinToken[seat] = (spinToken[seat] or 0) + 1 end
   Tiles.clearMarkers()
@@ -608,6 +625,49 @@ end
 -- Sopa: tiles are handled physically only while drawing.
 function G.drop(color, key, obj)
   if S.phase == "sopa" then return G.sopaDrop(color, key, obj) end
+end
+
+function G.canHandlePhysical(color, info)
+  return info ~= nil and S.phase == "play" and G.physicalSeats[info.seat]
+    and info.seat == S.hand.turn and G.canControl(color, info.seat)
+    and G.ownerOf(info.key) == info.seat
+end
+
+function G.pickUpPhysical(color, obj)
+  local info = Physical.info(obj)
+  if not G.canHandlePhysical(color, info) then
+    Physical.returnTile(obj)
+    return
+  end
+  -- Picking up the selected tile again must not toggle its markers off.
+  G.selected[info.seat] = nil
+  G.selectTile(color, info.seat, info.key)
+end
+
+function G.dropPhysical(color, obj)
+  local info = Physical.info(obj)
+  if not G.canHandlePhysical(color, info) then return Physical.returnTile(obj) end
+  local h, seat = S.hand, info.seat
+  if h.committed[seat] and h.committed[seat] ~= info.key then
+    U.tell(color, "Play your committed tile.")
+    return Physical.returnTile(obj)
+  end
+  local pos = obj.getPosition()
+  local side, nearest = nil, C.MARKER_SNAP * C.MARKER_SNAP
+  if math.abs(pos.y - (C.TABLE_Y + C.TILE_T / 2)) <= 3 then
+    for _, sd in ipairs(R.legalSides(h.board, R.parse(info.key), legalOpts())) do
+      local target = Layout.preview(h.layout, R.parse(info.key), sd, h.board[sd])
+      local distance = U.dist2(pos, target)
+      if distance <= nearest then side, nearest = sd, distance end
+    end
+  end
+  if side then
+    G.selected[seat] = info.key
+    G.playSelected(color, seat, side)
+  else
+    Physical.returnTile(obj)
+    U.tell(color, "Release near a green placement marker to play; the tile has returned to your rack.")
+  end
 end
 
 function G.play(seat, key, side)
@@ -731,6 +791,7 @@ end
 -- End of hand, game and series ------------------------------------------------------------------
 
 local function revealAll()
+  Physical.clear()
   for seat = 1, 4 do
     returnTaunt(seat)
     Tiles.revealHand(seat)
