@@ -106,7 +106,7 @@ function G.setTeamName(player, team, value)
     UIx.refreshLobby()
     return
   end
-  value = (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  value = U.cleanTeamName(value)
   if value == "" then value = C.TEAM_DEFAULT_NAMES[team] end
   S.teams[team].name = value
   UIx.refreshLobby()

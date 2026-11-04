@@ -1,5 +1,6 @@
 -- store.lua: the single game state table `S` (global), persisted through onSave/onLoad.
 local C = require("config")
+local U = require("util")
 local R = require("rules")
 local Layout = require("layout")
 
@@ -85,6 +86,11 @@ function Store.fixArrays()
   for seat = 1, 4 do h.hands[seat] = h.hands[seat] or {} end
   h.revealed = h.revealed or {}
   h.revealedHideable = h.revealedHideable or {}
+  -- Older saves stored "Team Red"; names are now stored bare and capped in length.
+  for team = 1, 2 do
+    local name = U.cleanTeamName(S.teams[team] and S.teams[team].name)
+    S.teams[team] = { name = (name ~= "" and name) or C.TEAM_DEFAULT_NAMES[team] }
+  end
 end
 
 return Store

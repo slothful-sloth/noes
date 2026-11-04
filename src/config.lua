@@ -26,7 +26,8 @@ C.SEATS = {
 C.SEAT_OF_COLOR = {}
 for i, s in ipairs(C.SEATS) do C.SEAT_OF_COLOR[s.color] = i end
 
-C.TEAM_DEFAULT_NAMES = { "Team Red", "Team Blue" }
+C.TEAM_DEFAULT_NAMES = { "Red", "Blue" }   -- shown as "Team <name>"
+C.TEAM_NAME_MAX = 12
 C.TEAM_HEX = { "#E8743B", "#3BA3E8" }
 C.TEAM_RGB = { { 0.91, 0.45, 0.23 }, { 0.23, 0.64, 0.91 } }
 C.TEAM_BUTTON = { "#b8592c|#cf6a3a|#9a4a24|#b8592c80", "#2c79b8|#3a8bcf|#24659a|#2c79b880" }

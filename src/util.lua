@@ -75,9 +75,29 @@ function U.nameAt(seat)
   return C.SEATS[seat].color
 end
 
-function U.teamName(team)
+-- First n characters of a UTF-8 string.
+function U.utf8Sub(s, n)
+  local out, count = {}, 0
+  for ch in string.gmatch(s, "[%z\1-\127\194-\244][\128-\191]*") do
+    count = count + 1
+    if count > n then break end
+    out[#out + 1] = ch
+  end
+  return table.concat(out)
+end
+
+-- A team's stored name is the bare name ("Red"); clean user input into that form.
+function U.cleanTeamName(value)
+  value = (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  value = value:gsub("^[Tt][Ee][Aa][Mm]%s+", "")
+  return U.utf8Sub(value, C.TEAM_NAME_MAX)
+end
+
+function U.bareTeamName(team)
   return (S and S.teams[team] and S.teams[team].name) or C.TEAM_DEFAULT_NAMES[team]
 end
+
+function U.teamName(team) return "Team " .. U.bareTeamName(team) end
 
 function U.otherColors(color)
   local list = {}

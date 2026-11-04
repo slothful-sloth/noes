@@ -128,8 +128,8 @@ function UIx.refreshLobby()
   setAttr("btnStart", "textColor", canStart and "#1b1b1b" or "#9a9a9a")
   UIx.canStart = canStart
   UIx.seatedCount = seated
-  setAttr("team1", "text", S.teams[1].name)
-  setAttr("team2", "text", S.teams[2].name)
+  setAttr("team1", "text", U.bareTeamName(1))
+  setAttr("team2", "text", U.bareTeamName(2))
   styleButton("rsPr", st.ruleset == "pr")
   styleButton("rsCustom", st.ruleset == "custom")
   for _, n in ipairs({ 1, 3, 5 }) do styleButton("bo" .. n, st.bestOf == n) end
@@ -165,14 +165,18 @@ function UIx.rowHow(row)
   return table.concat(parts, " ")
 end
 
-local function seriesLine()
-  return string.format("Game %d of best of %d  ·  Games: %s %d – %d %s",
-    S.series.gameNo, S.settings.bestOf, U.teamName(1), S.series.games[1], S.series.games[2], U.teamName(2))
+local function gameLine() return string.format("Game %d of best of %d", S.series.gameNo, S.settings.bestOf) end
+local function gamesLine()
+  return string.format("%s %d – %d %s", U.teamName(1), S.series.games[1], S.series.games[2], U.teamName(2))
 end
 
 function UIx.refreshScore()
   local rows = S.game.rows
-  local c1, c2, c3, c4, c5 = {}, {}, {}, {}, {}
+  -- "Team" sits in its own label above each team column (scoreTeam1/2 in Global.xml), so the
+  -- header row holds #, Winner, Hand and the bare team names.
+  local c1, c2, c3 = { "<b>#</b>" }, { "<b>Winner</b>" }, { "<b>Hand</b>" }
+  local c4 = { "<b>" .. U.bareTeamName(1) .. "</b>" }
+  local c5 = { "<b>" .. U.bareTeamName(2) .. "</b>" }
   local first = math.max(1, #rows - 17)
   for i = first, #rows do
     local row = rows[i]
@@ -191,13 +195,14 @@ function UIx.refreshScore()
     c5[#c5 + 1] = live[2] > 0 and ("+" .. live[2]) or "·"
   end
   local rs = R.RULESETS[S.settings.ruleset]
-  setText("scoreTitle", "Score · " .. rs.name .. " · to " .. rs.target)
-  setText("scoreSeries", seriesLine())
-  setText("scoreCol1", #c1 > 0 and table.concat(c1, "\n") or " ")
-  setText("scoreCol2", #c2 > 0 and table.concat(c2, "\n") or " ")
-  setText("scoreCol3", #c3 > 0 and table.concat(c3, "\n") or " ")
-  setText("scoreCol4", "<b>" .. U.teamName(1) .. "</b>\n" .. table.concat(c4, "\n"))
-  setText("scoreCol5", "<b>" .. U.teamName(2) .. "</b>\n" .. table.concat(c5, "\n"))
+  setText("scoreTitle", rs.name .. " · to " .. rs.target)
+  setText("scoreGame", gameLine())
+  setText("scoreGames", gamesLine())
+  setText("scoreCol1", table.concat(c1, "\n"))
+  setText("scoreCol2", table.concat(c2, "\n"))
+  setText("scoreCol3", table.concat(c3, "\n"))
+  setText("scoreCol4", table.concat(c4, "\n"))
+  setText("scoreCol5", table.concat(c5, "\n"))
   setText("scoreTotals", string.format("Total:  %s %d   ·   %s %d",
     U.teamName(1), S.game.scores[1], U.teamName(2), S.game.scores[2]))
   UIx.refreshBoard3D(rows, first)
@@ -223,9 +228,8 @@ function UIx.refreshBoard3D(rows, first)
   end
   local rs = R.RULESETS[S.settings.ruleset]
   fitted(rs.name .. " · to " .. rs.target, 0, 8.3, 11.5, 420, { 1, 0.85, 0.5 })
-  fitted(string.format("Game %d · best of %d", S.series.gameNo, S.settings.bestOf), 0, 7.6, 11.5, 300)
-  fitted(string.format("Games won: %s %d – %d %s", U.teamName(1), S.series.games[1], S.series.games[2],
-    U.teamName(2)), 0, 7.05, 11.5, 300)
+  fitted(gameLine(), 0, 7.6, 11.5, 300)
+  fitted(gamesLine(), 0, 7.05, 11.5, 300)
   local y = 6.35
   local startRow = math.max(first, #rows - 6)
   for i = startRow, #rows do
