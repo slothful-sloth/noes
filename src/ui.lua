@@ -71,16 +71,26 @@ end
 
 function UIx.status(text) setText("status", text) end
 
-function UIx.banner(text, seconds, color)
+-- Shows banners one after another; any later banner call cancels the rest of the sequence.
+-- Each entry is { text, seconds, color }.
+function UIx.bannerSequence(list)
   bannerToken = bannerToken + 1
   local my = bannerToken
-  setText("bannerText", text)
-  setAttr("bannerText", "color", color or "#ffd36b")
-  setAttr("banner", "active", "true")
-  Wait.time(function()
-    if my == bannerToken then setAttr("banner", "active", "false") end
-  end, seconds or 3)
+  local function show(i)
+    if my ~= bannerToken then return end
+    local b = list[i]
+    if not b then return setAttr("banner", "active", "false") end
+    setText("bannerText", b[1])
+    setAttr("bannerText", "color", b[3] or "#ffd36b")
+    setAttr("banner", "active", "true")
+    Wait.time(function() show(i + 1) end, b[2] or 3)
+  end
+  show(1)
 end
+
+function UIx.banner(text, seconds, color) UIx.bannerSequence({ { text, seconds, color } }) end
+
+function UIx.hideBanner() UIx.bannerSequence({}) end
 
 -- Rules text -----------------------------------------------------------------------------------
 
