@@ -1,0 +1,7 @@
+# Python 3.12 or newer.
+numpy>=2.0        # texture, mesh and sound generators
+pillow>=10.0      # textures and UI images
+lupa>=2.0         # Lua 5.2 runtime for tools/run_tests.py and tools/sim.py
+# cairosvg needs the system Cairo library and is only used to regenerate the flag
+# textures (tools/gen_textures.py). It is optional; see README.md.
+# cairosvg>=2.7

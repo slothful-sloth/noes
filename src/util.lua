@@ -75,9 +75,29 @@ function U.nameAt(seat)
   return C.SEATS[seat].color
 end
 
-function U.teamName(team)
+-- First n characters of a UTF-8 string.
+function U.utf8Sub(s, n)
+  local out, count = {}, 0
+  for ch in string.gmatch(s, "[%z\1-\127\194-\244][\128-\191]*") do
+    count = count + 1
+    if count > n then break end
+    out[#out + 1] = ch
+  end
+  return table.concat(out)
+end
+
+-- A team's stored name is the bare name ("Red"); clean user input into that form.
+function U.cleanTeamName(value)
+  value = (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  value = value:gsub("^[Tt][Ee][Aa][Mm]%s+", "")
+  return U.utf8Sub(value, C.TEAM_NAME_MAX)
+end
+
+function U.bareTeamName(team)
   return (S and S.teams[team] and S.teams[team].name) or C.TEAM_DEFAULT_NAMES[team]
 end
+
+function U.teamName(team) return "Team " .. U.bareTeamName(team) end
 
 function U.otherColors(color)
   local list = {}
@@ -93,6 +113,15 @@ end
 function U.tell(color, msg, rgb)
   local p = Player[color]
   if p and p.seated then p.broadcast(msg, rgb or { 1, 0.85, 0.5 }) end
+end
+
+-- Object button labels: about 0.00095 world units of width per character per font_size unit
+-- (measured on the scoreboard). Returns the largest font size up to `maxSize` that keeps `text`
+-- within `maxWidth` world units.
+function U.charCount(text) return select(2, string.gsub(text, "[^\128-\191]", "")) end
+function U.fitFont(text, maxWidth, maxSize)
+  local n = math.max(1, U.charCount(text))
+  return math.max(60, math.min(maxSize, math.floor(maxWidth / (n * 0.00095))))
 end
 
 function U.announce(msg, rgb) broadcastToAll(msg, rgb or { 1, 1, 1 }) end

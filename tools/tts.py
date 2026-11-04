@@ -121,7 +121,7 @@ def main(argv):
             {"name": "Global", "guid": "-1", "script": script, "ui": ui}]}, float(argv[1]) if len(argv) > 1 else 6)
         return 1 if any(m.get("messageID") == 3 for m in msgs) else 0
     if cmd in ("exec", "execf"):
-        code = argv[1] if cmd == "exec" else Path(argv[1]).read_text()
+        code = argv[1] if cmd == "exec" else Path(argv[1]).read_text(encoding="utf-8")
         wait = float(argv[2]) if len(argv) > 2 else 3
         msgs = with_listener({"messageID": 3, "guid": "-1", "script": code}, wait)
         return 1 if any(m.get("messageID") == 3 for m in msgs) else 0

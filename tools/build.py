@@ -13,7 +13,10 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
+import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -21,7 +24,30 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
 UI = ROOT / "ui" / "Global.xml"
 REPO = "slothful-sloth/noes"
-SAVES = Path.home() / ".local/share/Tabletop Simulator/Saves"
+
+
+def tts_saves_dir() -> Path:
+    """The Tabletop Simulator Saves folder. Set TTS_SAVES to override it (for example when the
+    save location was changed in TTS's menu)."""
+    if os.environ.get("TTS_SAVES"):
+        return Path(os.environ["TTS_SAVES"]).expanduser()
+    home = Path.home()
+    if sys.platform == "win32":
+        # Documents may be redirected to OneDrive.
+        docs = [home / "Documents"]
+        if os.environ.get("OneDrive"):
+            docs.insert(0, Path(os.environ["OneDrive"]) / "Documents")
+        candidates = [d / "My Games" / "Tabletop Simulator" / "Saves" for d in docs]
+        for c in candidates:
+            if c.is_dir():
+                return c
+        return candidates[-1]
+    if sys.platform == "darwin":
+        return home / "Library" / "Tabletop Simulator" / "Saves"
+    return home / ".local" / "share" / "Tabletop Simulator" / "Saves"
+
+
+SAVES = tts_saves_dir()
 STATE_FILE = ROOT / ".build_assets"
 
 MODULE_ORDER = ["rules", "layout", "config", "util", "store", "tiles", "physical", "ui", "sound", "themes", "game"]
@@ -59,11 +85,43 @@ def local_asset_dir() -> Path:
     d.mkdir(exist_ok=True)
     link = d / f"assets-{h.hexdigest()[:8]}"
     for old in d.glob("assets-*"):
-        if old != link and old.is_symlink():
-            old.unlink()
+        if old != link:
+            _remove_link(old)
     if not link.exists():
-        link.symlink_to(ROOT / "assets")
+        _make_link(link, ROOT / "assets")
     return link
+
+
+def _is_junction(p: Path) -> bool:
+    return bool(getattr(p, "is_junction", lambda: False)())
+
+
+def _remove_link(p: Path) -> None:
+    """Remove a symlink, junction or copied folder under .build/ without touching assets/."""
+    if p.is_symlink():
+        p.unlink()
+    elif _is_junction(p):
+        os.rmdir(p)  # removes the junction only, never the target's contents
+    elif p.is_dir():
+        shutil.rmtree(p)
+
+
+def _make_link(link: Path, target: Path) -> None:
+    """Symlink on Linux/macOS. On Windows, symlinks need Developer Mode, so fall back to a
+    directory junction (no special rights), and finally to a copy."""
+    try:
+        link.symlink_to(target, target_is_directory=True)
+        return
+    except OSError:
+        if sys.platform != "win32":
+            raise
+    try:
+        import _winapi
+        _winapi.CreateJunction(str(target), str(link))
+        return
+    except (ImportError, AttributeError, OSError):
+        pass
+    shutil.copytree(target, link)
 
 
 def asset_base(mode: str, sha: str | None) -> str:
@@ -75,7 +133,7 @@ def asset_base(mode: str, sha: str | None) -> str:
 
 def current_base() -> str:
     if STATE_FILE.exists():
-        return STATE_FILE.read_text().strip()
+        return STATE_FILE.read_text(encoding="utf-8").strip()
     return asset_base("local", None)
 
 
@@ -139,9 +197,9 @@ def bundle(base: str | None = None) -> tuple[str, str]:
         path = SRC / f"{name}.lua"
         if not path.exists():
             continue
-        parts.append(f"__mods[{json.dumps(name)}] = function()\n{path.read_text()}\nend")
-    parts.append((SRC / "main.lua").read_text())
-    xml = UI.read_text().replace("<!--HAND_PANELS-->", hand_panels_xml()) if UI.exists() else ""
+        parts.append(f"__mods[{json.dumps(name)}] = function()\n{path.read_text(encoding='utf-8')}\nend")
+    parts.append((SRC / "main.lua").read_text(encoding="utf-8"))
+    xml = UI.read_text(encoding="utf-8").replace("<!--HAND_PANELS-->", hand_panels_xml()) if UI.exists() else ""
     return "\n".join(parts), xml
 
 
@@ -241,10 +299,10 @@ def main():
     ap.add_argument("--out", default=str(SAVES / "Noes.json"))
     a = ap.parse_args()
     base = asset_base(a.assets, a.sha)
-    STATE_FILE.write_text(base + "\n")
+    STATE_FILE.write_text(base + "\n", encoding="utf-8")
     data = save_json(base)
     out = Path(a.out)
-    out.write_text(json.dumps(data, indent=1, ensure_ascii=False))
+    out.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
     lua_lines = data["LuaScript"].count("\n")
     print(f"wrote {out} ({len(data['ObjectStates'])} objects, Global script {lua_lines} lines)")
     print(f"asset base: {base}")

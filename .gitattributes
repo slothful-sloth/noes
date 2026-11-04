@@ -1,0 +1,6 @@
+# Keep text files LF on every platform (TTS and the generators don't need CRLF).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.wav binary
+*.ttf binary

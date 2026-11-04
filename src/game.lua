@@ -78,7 +78,7 @@ function G.swapSeats(player, team)
   if not S.settings.dev then
     local mine = U.seatOf(player.color)
     if not mine or R.teamOf(mine) ~= team then
-      return U.tell(player.color, "Only " .. U.teamName(team) .. " can swap their seats.")
+      return U.tell(player.color, "Only " .. U.teamName(team) .. " can swap seats.")
     end
   end
   local a, b = (team == 1) and 1 or 2, (team == 1) and 3 or 4
@@ -99,7 +99,7 @@ function G.swapSeats(player, team)
       Wait.frames(function() UIx.refreshLobby() end, 5)
     end, 10)
   end, 10)
-  U.announce(U.teamName(team) .. " swap seats.", C.TEAM_RGB[team])
+  U.announce(U.teamName(team) .. " swaps seats.", C.TEAM_RGB[team])
 end
 
 function G.setTeamName(player, team, value)
@@ -113,7 +113,7 @@ function G.setTeamName(player, team, value)
     UIx.refreshLobby()
     return
   end
-  value = (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  value = U.cleanTeamName(value)
   if value == "" then value = C.TEAM_DEFAULT_NAMES[team] end
   S.teams[team].name = value
   UIx.refreshLobby()
@@ -799,6 +799,8 @@ local function revealAll()
 end
 
 local KIND_BANNER = { domino = "¡Dominó!", capicu = "¡Capicú!", chuchazo = "¡Chuchazo!", tranque = "¡Tranque!" }
+-- Shown instead when the hand of that kind also wins the game.
+local GAME_KIND_BANNER = { capicu = "¡De-CAPI-tate!", chuchazo = "¡Chuchazitate!", tranque = "¡De-CLOSE-itate!" }
 
 local function recordRow(sc)
   local h = S.hand
@@ -831,7 +833,7 @@ local function finishHand(sc)
   U.announce(detail, { 1, 0.85, 0.5 })
   UIx.refreshScore()
   local winner = R.gameWinner(rs(), S.game.scores)
-  if winner then return G.endGame(winner) end
+  if winner then return G.endGame(winner, sc.kind) end
   S.phase = "handover"
   UIx.status(string.format("Game %d · hand %d over", S.series.gameNo, S.game.handNo))
   UIx.result(KIND_BANNER[sc.kind] .. "  " .. U.teamName(sc.team) .. " +" .. row.points[sc.team], detail, "Next hand")
@@ -864,7 +866,18 @@ function G.endByPassBonus(team)
   G.endGame(team)
 end
 
-function G.endGame(team)
+-- A game won by a capicú, chuchazo or tranque gets its own banner before the usual one.
+local function winBanner(kind, text, seconds)
+  local special = GAME_KIND_BANNER[kind]
+  if special then
+    UIx.bannerSequence({ { special, 3.5 }, { text, seconds } })
+  else
+    UIx.banner(text, seconds)
+  end
+end
+
+-- kind: how the deciding hand ended ("domino", "capicu", "chuchazo", "tranque" or nil).
+function G.endGame(team, kind)
   S.series.games[team] = S.series.games[team] + 1
   S.series.past[#S.series.past + 1] = { winner = team, scores = { S.game.scores[1], S.game.scores[2] } }
   UIx.refreshScore()
@@ -873,21 +886,22 @@ function G.endGame(team)
   local games = string.format("Games: %s %d – %d %s", U.teamName(1), S.series.games[1], S.series.games[2], U.teamName(2))
   if seriesWinner then
     S.phase = "seriesover"
-    UIx.banner(U.teamName(seriesWinner) .. " win the series!", 6)
+    winBanner(kind, U.teamName(seriesWinner) .. " wins the series!", 6)
     Sound.play("slam")
     UIx.status("Series over")
-    UIx.result(U.teamName(seriesWinner) .. " win the series!", score .. "\n" .. games, "Back to lobby")
+    UIx.result(U.teamName(seriesWinner) .. " wins the series!", score .. "\n" .. games, "Back to lobby")
   else
     S.phase = "gameover"
-    UIx.banner(U.teamName(team) .. " win game " .. S.series.gameNo .. "!", 4)
+    winBanner(kind, U.teamName(team) .. " wins game " .. S.series.gameNo .. "!", 4)
     UIx.status("Game " .. S.series.gameNo .. " over")
-    UIx.result(U.teamName(team) .. " win game " .. S.series.gameNo, score .. "\n" .. games .. "\nPartners may swap seats before the next game.", "Next game")
+    UIx.result(U.teamName(team) .. " wins game " .. S.series.gameNo, score .. "\n" .. games .. "\nPartners may swap seats before the next game.", "Next game")
     UIx.showSwaps(true)
   end
 end
 
 function G.resultNext(player)
   if not U.seatOf(player.color) and not S.settings.dev and not player.host then return end
+  UIx.hideBanner()
   if S.phase == "handover" then
     G.startHand()
   elseif S.phase == "gameover" then

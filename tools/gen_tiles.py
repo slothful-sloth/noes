@@ -274,7 +274,7 @@ def write_obj(path: Path, verts, uvs, norms, faces):
         if MIRROR_X:          # mirroring flips winding; restore it
             b, c = c, b
         lines_out.append(f"f {a + 1}/{a + 1}/{nidx[a]} {b + 1}/{b + 1}/{nidx[b]} {c + 1}/{c + 1}/{nidx[c]}")
-    path.write_text("\n".join(lines_out) + "\n")
+    path.write_text("\n".join(lines_out) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_collider(path: Path):
@@ -284,7 +284,7 @@ def write_collider(path: Path):
     out = ["# Noes tile collider"] + [f"v {x:.4f} {y:.4f} {z:.4f}" for x, y, z in v]
     for a, b, c, d in quads:
         out.append(f"f {a + 1} {b + 1} {c + 1} {d + 1}")
-    path.write_text("\n".join(out) + "\n")
+    path.write_text("\n".join(out) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_proxy_collider(path: Path):
@@ -292,7 +292,7 @@ def write_proxy_collider(path: Path):
     out = ["# Noes proxy collider (deliberately far away)",
            "v 0 -40 0", "v 0.05 -40 0", "v 0 -40 0.05", "v 0 -39.95 0",
            "f 1 3 2", "f 1 2 4", "f 1 4 3", "f 2 3 4"]
-    path.write_text("\n".join(out) + "\n")
+    path.write_text("\n".join(out) + "\n", encoding="utf-8", newline="\n")
 
 
 def main():
