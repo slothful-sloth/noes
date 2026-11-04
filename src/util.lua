@@ -95,6 +95,15 @@ function U.tell(color, msg, rgb)
   if p and p.seated then p.broadcast(msg, rgb or { 1, 0.85, 0.5 }) end
 end
 
+-- Object button labels: about 0.00095 world units of width per character per font_size unit
+-- (measured on the scoreboard). Returns the largest font size up to `maxSize` that keeps `text`
+-- within `maxWidth` world units.
+function U.charCount(text) return select(2, string.gsub(text, "[^\128-\191]", "")) end
+function U.fitFont(text, maxWidth, maxSize)
+  local n = math.max(1, U.charCount(text))
+  return math.max(60, math.min(maxSize, math.floor(maxWidth / (n * 0.00095))))
+end
+
 function U.announce(msg, rgb) broadcastToAll(msg, rgb or { 1, 1, 1 }) end
 
 function U.copy(t)

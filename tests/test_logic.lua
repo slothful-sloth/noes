@@ -148,6 +148,17 @@ local function overlaps(a, b2)
   local eps = 0.01
   return a[1] < b2[3] - eps and b2[1] < a[3] - eps and a[2] < b2[4] - eps and b2[2] < a[4] - eps
 end
+-- Two footprints touch along an edge: separated by at most the gap on one axis and sharing
+-- at least `minShared` of length on the other.
+local function touches(a, b2, minShared)
+  local gx = math.max(a[1] - b2[3], b2[1] - a[3])
+  local gz = math.max(a[2] - b2[4], b2[2] - a[4])
+  local sx = math.min(a[3], b2[3]) - math.max(a[1], b2[1])
+  local sz = math.min(a[4], b2[4]) - math.max(a[2], b2[2])
+  local tol = Layout.GAP + 0.01
+  return (gx >= -0.01 and gx <= tol and sz >= minShared) or (gz >= -0.01 and gz <= tol and sx >= minShared)
+end
+local function longAxisX(pl) return math.abs(dirOfYaw(pl.yaw)) > 0.5 end
 
 -- Simulate many random full games of placements (ignoring rules except matching) and ensure
 -- no overlaps and everything stays inside the board square.
@@ -163,6 +174,7 @@ for trial = 1, 400 do
   local pl = Layout.place(lst, first, "C")
   board = R.play(board, first, "C")
   rects[#rects + 1] = rect(pl, first)
+  local prev = { L = { pl = pl, t = first, r = rects[1] }, R = { pl = pl, t = first, r = rects[1] } }
   local progress = true
   while progress do
     progress = false
@@ -192,6 +204,13 @@ for trial = 1, 400 do
             break
           end
         end
+        local pv = prev[side]
+        check("touches previous t" .. trial .. " " .. R.key(t), touches(r, pv.r, 0.45), R.key(pv.t))
+        if R.isDouble(pv.t) and not R.isDouble(t) then
+          check("crosswise after double t" .. trial .. " " .. R.key(t),
+            longAxisX(pp) ~= longAxisX(pv.pl), R.key(pv.t))
+        end
+        prev[side] = { pl = pp, t = t, r = r }
         rects[#rects + 1] = r
         for _, c in ipairs(r) do maxExtent = math.max(maxExtent, math.abs(c)) end
         board = R.play(board, t, side)

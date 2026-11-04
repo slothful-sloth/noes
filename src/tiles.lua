@@ -304,6 +304,52 @@ function Tiles.spawnMarker(color, p, kind, info, lifetime)
   return obj
 end
 
+-- Name signs: upright labels on the rail in front of each seat, facing the table so the other
+-- three players can read them. Hidden from the seat's own player. ------------------------------
+
+local signs = {}   -- seat -> object
+
+local function signText(seat)
+  local p = U.playerAt(seat)
+  if p then return p.steam_name, C.TEAM_RGB[R.teamOf(seat)] end
+  return "open seat", { 0.75, 0.75, 0.75 }
+end
+
+local function labelSign(seat)
+  local o = signs[seat]
+  if not o or o.isDestroyed() then return end
+  local text, rgb = signText(seat)
+  o.clearButtons()
+  o.createButton({
+    click_function = "noop", function_owner = Global, label = text,
+    position = { 0, 0.55, 0 }, rotation = { 270, 0, 0 }, width = 0, height = 0,
+    font_size = U.fitFont(text, 9, 420), font_color = { rgb[1], rgb[2], rgb[3], 1 },
+  })
+  if not S.settings.dev then o.setInvisibleTo({ C.SEATS[seat].color }) else o.setInvisibleTo({}) end
+end
+
+function Tiles.refreshSigns()
+  for seat = 1, 4 do
+    local o = signs[seat]
+    if o and not o.isDestroyed() then
+      if not o.spawning and not o.loading_custom then labelSign(seat) end
+    else
+      local pos = U.seatPoint(seat, C.RAIL_DIST, 0, C.TABLE_Y + C.RAIL_TOP)
+      o = spawnObject({ type = "Custom_Model", position = pos, rotation = { 0, C.SEATS[seat].yaw, 0 }, sound = false })
+      o.setCustomObject({ mesh = C.asset(C.PROXY_COLLIDER), collider = C.asset(C.PROXY_COLLIDER), type = 0,
+        cast_shadows = false })
+      o.setLock(true)
+      o.setGMNotes("noes_marker")
+      signs[seat] = o
+      whenLoaded(o, function(obj)
+        obj.setLock(true)
+        obj.interactable = false
+        labelSign(seat)
+      end)
+    end
+  end
+end
+
 function Tiles.clearStrays()
   for _, o in ipairs(getObjects()) do
     local n = o.getGMNotes()

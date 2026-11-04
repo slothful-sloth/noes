@@ -8,7 +8,10 @@
 -- The opening tile sits at the origin. The R arm runs +x and snakes into rows further and
 -- further toward -z; the L arm runs -x and snakes toward +z. At the bound an arm takes two
 -- corners: first toward its outward side (`vert`), then back along the reversed row direction.
--- Doubles lie crosswise and never take a corner.
+-- Doubles lie crosswise and never take a normal corner. A corner never directly follows a
+-- double (the turning tile would lie side by side with it); the next tile goes straight first.
+-- A double that arrives too close to the bound for that straight tile becomes the pivot
+-- instead: it lies in line with the row and the chain leaves from the side of its far half.
 
 local Layout = {}
 
@@ -35,8 +38,9 @@ function Layout.orientedYaw(t, outer, d)
 end
 
 -- State ----------------------------------------------------------------------
--- arm = { edge = {x,z}, dir = {dx,dz}, vert = {0,±1}, after = {±1,0}|nil, pending = n }
---   pending = corner turns still owed; after = row direction once the turn completes
+-- arm = { edge = {x,z}, dir = {dx,dz}, vert = {0,±1}, after = {±1,0}|nil, pending = n, lastDouble = bool }
+--   pending = corner turns still owed; after = row direction once the turn completes;
+--   lastDouble = the arm's last tile was a double, so the next tile may not turn
 
 function Layout.new()
   return { arms = nil }
@@ -70,17 +74,29 @@ function Layout.preview(state, t, side, v)
   local outer = (t.hi == v) and t.lo or t.hi
   local isDouble = t.hi == t.lo
   local d = arm.dir
-  local next = { edge = arm.edge, dir = arm.dir, vert = arm.vert, after = arm.after, pending = arm.pending }
+  local next = { edge = arm.edge, dir = arm.dir, vert = arm.vert, after = arm.after, pending = arm.pending,
+                 lastDouble = isDouble }
+  local horizontal = math.abs(d[1]) > 0.5
 
   if isDouble then
-    -- Crosswise, straight ahead, never a corner.
+    if arm.pending == 0 and horizontal and along(arm, W + G + L) > Layout.BOUND then
+      -- Pivot: no room for a straight tile after a crosswise double, so the double lies in line
+      -- with the row and the chain turns off the side of its far half.
+      local center = add(arm.edge, mul(d, L / 2))
+      next.edge = add(add(arm.edge, mul(d, L - W / 2)), mul(arm.vert, W / 2 + G))
+      next.dir = arm.vert
+      next.after = mul(d, -1)
+      next.pending = 1
+      return { x = center[1], z = center[2], yaw = Layout.yawFor(d) }, next
+    end
+    -- Crosswise, straight ahead.
     local center = add(arm.edge, mul(d, W / 2))
     next.edge = add(arm.edge, mul(d, W + G))
     return { x = center[1], z = center[2], yaw = Layout.orientedYaw(t, outer, d) }, next
   end
 
-  local mustTurn = arm.pending > 0
-  if not mustTurn and math.abs(d[1]) > 0.5 and along(arm, L) > Layout.BOUND then
+  local mustTurn = arm.pending > 0 and not arm.lastDouble
+  if not mustTurn and arm.pending == 0 and horizontal and along(arm, L) > Layout.BOUND then
     mustTurn = true
     next.pending = 2
     next.after = mul(d, -1)

@@ -67,6 +67,8 @@ C.ZONE_DIST = 16.8         -- centre of the virtual rack drawn during the sopa
 C.ZONE_HALF_LAT = 5.0
 C.ZONE_HALF_RAD = 1.9
 C.WHITE_TEX = "textures/white.png"
+C.RAIL_DIST = 22.1          -- middle of the maple rail (face apothem 21, outer edge 23.2)
+C.RAIL_TOP = 0.75           -- rail top above C.TABLE_Y
 C.KNOCK_SOUND = "sounds/knock.wav"
 C.SLAM_SOUND = "sounds/slam.wav"
 

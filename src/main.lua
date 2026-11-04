@@ -22,6 +22,7 @@ function onLoad(saved)
   Store.load(saved)
   addMenus()
   Tiles.clearStrays()
+  Tiles.refreshSigns()
   UIx.refreshLobby()
   UIx.refreshScore()
   UIx.refreshHands()
@@ -52,6 +53,7 @@ function noop() end
 -- Players ----------------------------------------------------------------------------------
 
 function onPlayerChangeColor(color)
+  Tiles.refreshSigns()
   local seat = U.seatOf(color)
   if seat and Player[color] and Player[color].seated then
     Player[color].lookAt({ position = { 0, C.TABLE_Y, 0 }, pitch = 55, yaw = C.SEATS[seat].yaw, distance = 40 })
@@ -64,6 +66,7 @@ function onPlayerChangeColor(color)
 end
 
 function onPlayerDisconnect(player)
+  Wait.frames(Tiles.refreshSigns, 5)   -- the player is still listed as seated during this event
   if S.phase ~= "lobby" and U.seatOf(player.color) then
     U.announce(player.steam_name .. " left. Another player can take the " .. player.color .. " seat to continue.", { 1, 0.6, 0.4 })
   end
@@ -129,6 +132,7 @@ function uiDevMode(player)
   if not player.host then return U.tell(player.color, "Only the host can toggle developer mode.") end
   G.changeSetting(player, "dev", not S.settings.dev)
   G.checkStart()
+  Tiles.refreshSigns()
 end
 
 function uiShuffle(player) G.shuffle(player) end

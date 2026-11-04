@@ -217,20 +217,26 @@ function UIx.refreshBoard3D(rows, first)
       width = 0, height = 0, font_size = size, font_color = color or { 0.95, 0.95, 0.9 },
     })
   end
+  -- Chalk face is 13 units wide; keep every label inside its column.
+  local function fitted(text, x, y, maxWidth, maxSize, color)
+    label(text, x, y, U.fitFont(text, maxWidth, maxSize), color)
+  end
   local rs = R.RULESETS[S.settings.ruleset]
-  label(rs.name .. " · to " .. rs.target, 0, 8.3, 420, { 1, 0.85, 0.5 })
-  label(seriesLine(), 0, 7.55, 300)
-  local y = 6.75
-  local startRow = math.max(first, #rows - 7)
+  fitted(rs.name .. " · to " .. rs.target, 0, 8.3, 11.5, 420, { 1, 0.85, 0.5 })
+  fitted(string.format("Game %d · best of %d", S.series.gameNo, S.settings.bestOf), 0, 7.6, 11.5, 300)
+  fitted(string.format("Games won: %s %d – %d %s", U.teamName(1), S.series.games[1], S.series.games[2],
+    U.teamName(2)), 0, 7.05, 11.5, 300)
+  local y = 6.35
+  local startRow = math.max(first, #rows - 6)
   for i = startRow, #rows do
     local row = rows[i]
-    label(string.format("%d. %s: %s", row.n, row.winnerName or "-", UIx.rowHow(row)), -1.4, y, 260)
+    fitted(string.format("%d. %s: %s", row.n, row.winnerName or "-", UIx.rowHow(row)), -1.6, y, 8.6, 260)
     label((row.points[1] > 0 and ("+" .. row.points[1]) or "·"), 3.9, y, 280, C.TEAM_RGB[1])
     label((row.points[2] > 0 and ("+" .. row.points[2]) or "·"), 5.5, y, 280, C.TEAM_RGB[2])
     y = y - 0.62
   end
-  label(U.teamName(1) .. "  " .. S.game.scores[1], -3.1, 1.25, 480, C.TEAM_RGB[1])
-  label(U.teamName(2) .. "  " .. S.game.scores[2], 3.1, 1.25, 480, C.TEAM_RGB[2])
+  fitted(U.teamName(1) .. "  " .. S.game.scores[1], -3.1, 1.25, 5.8, 480, C.TEAM_RGB[1])
+  fitted(U.teamName(2) .. "  " .. S.game.scores[2], 3.1, 1.25, 5.8, 480, C.TEAM_RGB[2])
 end
 
 -- Hand panels ------------------------------------------------------------------------------------
