@@ -172,8 +172,7 @@ def run_series(seed: int, ruleset: str, bestof: int, verbose: bool) -> dict:
         p.seated = True
     g.onPlayerChangeColor("Red")
     # settings
-    if ruleset == "custom":
-        g.uiRulesCustom(players["Red"])
+    {"pr": g.uiRulesPr, "custom": g.uiRulesCustom}[ruleset](players["Red"])
     {1: g.uiBestOf1, 3: g.uiBestOf3, 5: g.uiBestOf5}[bestof](players["Red"])
     g.uiStart(players["Blue"])
     adv(0.5)

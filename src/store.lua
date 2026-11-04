@@ -8,7 +8,7 @@ local Store = {}
 
 local function newSettings()
   return {
-    ruleset = "pr", bestOf = 3,
+    ruleset = "custom", bestOf = 3,   -- "custom" is the Four Horsies rule set
     face = "white", back = "pr", backUrl = "",
     tableFace = "felt", tableUrl = "",
     dev = false,

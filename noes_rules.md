@@ -48,7 +48,7 @@
 
 + **Predefined rules:**
 
-| | Puerto Rican rules | Custom rules |
+| | Puerto Rican rules | Four Horsies (default) |
 |---|---|---|
 | Target score | 500 | 300 |
 | 6/6 on the series-opening lead | mandatory | holder leads, any tile |
